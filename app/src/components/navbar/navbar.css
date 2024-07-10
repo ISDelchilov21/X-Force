@@ -1,0 +1,35 @@
+.navbar{
+    width: 100%;
+    background-color: rgb(231, 231, 231);
+    top:0;
+    position:relative;
+    display: flex;
+    justify-content: space-between;
+    list-style-type: none;
+    align-items: center;
+    box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.241);
+}
+
+.right-side{
+    display: flex;
+    padding: 10px 20px;
+
+}
+.left-side{
+    padding: 10px 20px;
+}
+
+.right-side li a{
+    text-decoration: none;
+    padding: 10px;
+    font-size:26px;
+    color: rgb(60, 11, 60);
+}
+.left-side li a{
+    text-decoration: none;
+    font-size:30px;
+}
+
+.right-side li a:hover{
+    color: rgb(117, 13, 187);
+}
