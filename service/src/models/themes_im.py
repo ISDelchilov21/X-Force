@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class Themes(BaseModel):
+   id:int
    course_id:int
    uniqInfo:str
    title:str

@@ -9,6 +9,7 @@ def auth_user(username:str, password:str):
 
     user = get_user(username)
     if not user:
+        print(f"Atesh{user}")
         return False
     if not verify_password(password, user['password']):
         return False
@@ -34,5 +35,12 @@ def create_user( email:str, role:str, username:str, password:str):
     
     hashed_password = bcrypt.hash(password)
     curr.execute("""INSERT INTO users (email, role, username, password) VALUES(%s, %s, %s, %s)""", (email.lower(),role, username.lower(), hashed_password))
+    conn.commit()
+    return True
+
+
+
+def delete_user(username:str):
+    curr.execute("""DELETE FROM users WHERE name = %s""", (username))
     conn.commit()
     return True

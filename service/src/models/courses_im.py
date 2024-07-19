@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class CourseIm(BaseModel):
+    id:int
     owner_id:int
     org_id:int
     name:str

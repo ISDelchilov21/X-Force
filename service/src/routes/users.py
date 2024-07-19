@@ -17,13 +17,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, public_key, algorithms=["RS256"])
         username: str = payload["iss"]
-
+        
         user = db.db_user.get_user(username)
 
         return {
             "id": user["id"],
             "username": user["username"]
         }
+        
     
     except InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
