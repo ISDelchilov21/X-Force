@@ -1,19 +1,23 @@
 from pydantic import BaseModel
 
-class Themes(BaseModel):
+class ThemesIM(BaseModel):
    id:int
-   course_id:int
-   uniqInfo:str
+   class_id:int
+   owner_id:int
+   unique_info:str
    title:str
 
-class ThemesCourse(BaseModel):
+class ThemeGetIM(BaseModel):
+    title:str
+
+class ThemesClasssIM(BaseModel):
    course_id:int
    theme_id:int
 
-class ThemesTest(BaseModel):
+class ThemesTestIM(BaseModel):
    test_id:int
    theme_test_id:int
 
-class ThemesTest(BaseModel):
+class ThemesTestIM(BaseModel):
    test_id:int
    theme_homework_id:int

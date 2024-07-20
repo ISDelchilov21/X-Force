@@ -1,7 +1,7 @@
 from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from models.user_im import UserIm
+from models.user_im import UserIM
 from models.login_im import LoginIm
 from models.token_im import Token
 from db.db_user import auth_user, create_user
@@ -46,7 +46,7 @@ async def token(form_data: OAuth2PasswordRequestForm = Depends()):
     return Token(access_token=token, token_type="bearer")
 
 @router.post("/register", tags=["auth"])
-async def register(user_im: UserIm):
+async def register(user_im: UserIM):
     user = create_user(user_im.email, user_im.role, user_im.username, user_im.password)
     
     if not user:

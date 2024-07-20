@@ -1,9 +1,8 @@
-from models.organisations_im import OrganisationIm, OrganisationGetIm
-from models.user_im import UserIm
+from models.organisations_im import OrganisationIM, OrganisationGetIM, bridgeOrganisationUserIM,OrganisationJoinIM
 from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer
 
-from db.db_organisations import create_org, get_org_by_name, delete_organisation
+from db.db_organisations import create_org, get_org_by_name, get_org_by_code, add_user_to_organisation
 from fastapi import Depends, APIRouter, HTTPException, status
 import random
 import string
@@ -24,7 +23,7 @@ def generate_code(lenght):
 
 
 @router.post("/organisation/create", tags=["org"])
-async def create_orgasnisation(org_im: OrganisationIm, token: Annotated[str, Depends(oauth2_scheme)]):
+async def create_orgasnisation(org_im: OrganisationIM, token: Annotated[str, Depends(oauth2_scheme)]):
 
     payload = jwt.decode(token, public_key, algorithms=["RS256"])
 
@@ -41,9 +40,10 @@ async def create_orgasnisation(org_im: OrganisationIm, token: Annotated[str, Dep
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Organisation already exists",
-        ) 
+        )
+    
 @router.post("/get/organisation", tags=["org"])
-async def get_organisation(org_im:OrganisationGetIm):
+async def get_organisation(org_im:OrganisationGetIM):
     org = get_org_by_name(org_im.name)
 
     if not org:
@@ -52,4 +52,25 @@ async def get_organisation(org_im:OrganisationGetIm):
             detail="Organisation is not found",
         )
     return org
+@router.post("/organisation/join", tags=["org"])
+async def join_organisation(org_join_im: OrganisationJoinIM, token: Annotated[str, Depends(oauth2_scheme)]):
 
+   
+    payload = jwt.decode(token, public_key, algorithms=["RS256"])
+    id: int = payload["user_id"]
+    user_role:str = payload["user_role"]
+
+    get_org = get_org_by_code(org_join_im.code)
+
+    if not get_org:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organisation is not found",
+        )
+    
+    org_im = bridgeOrganisationUserIM(user_id=id, user_role=user_role,org_id=get_org['id'], org_name=get_org['name'])
+
+    print (f"User ID:{org_im.user_id} Organisation ID: {org_im.org_id} ")
+    org = add_user_to_organisation(org_im.user_id, org_im.user_role ,org_im.org_id, org_im.org_name)
+
+    return org

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class UserIm(BaseModel):
+class UserIM(BaseModel):
     id:int
     email:str
     role:str

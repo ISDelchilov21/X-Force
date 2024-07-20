@@ -1,22 +1,27 @@
 from pydantic import BaseModel
 
-class OrganisationIm(BaseModel):
+class OrganisationIM(BaseModel):
     id:int
     name:str
     entry_code:str
     owner_id:int
     role:str
 
-class OrganisationGetIm(BaseModel):
+class OrganisationGetIM(BaseModel):
     name:str
 
+class OrganisationJoinIM(BaseModel):
+    code:str
 
-class bridgeOrganisationUserIm(BaseModel):
+
+class bridgeOrganisationUserIM(BaseModel):
     user_id:int
+    user_role:str
     org_id:int
+    org_name:str
 
 
-class bridgeOrganisationCourseIm(BaseModel):
+class bridgeOrganisationCourseIM(BaseModel):
     course_id:int
     org_id:int
     

@@ -1,5 +1,4 @@
 from .db import *
-from models.user_im import UserIm
 
 
 
@@ -32,10 +31,11 @@ def create_org( name:str, entry_code:str, owner_id:int, role:str):
     conn.commit()
     return True
 
-def add_user_to_organisation(user_id:int, org_id:int):
-    curr.execute("""INSERT INTO organisations_users (organisation_id, user_id) VALUES(%s, %s)""", (user_id, org_id))
+def add_user_to_organisation(user_id:int, user_role:str, org_id:int, org_name:str):
+    curr.execute("""INSERT INTO organisations_users (organisation_id, organisation_name,user_id, user_role) VALUES(%s, %s, %s, %s)""", (org_id, org_name,user_id, user_role))
     conn.commit()
     return True
+
 
 
 def delete_organisation(name:str):
