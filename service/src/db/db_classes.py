@@ -4,27 +4,27 @@ from .db import *
 
 def get_class_by_name(name:str):
     curr.execute("""SELECT * FROM classes WHERE lower(name) = %s""", (name.lower(),))
-    org = curr.fetchone()
+    classes = curr.fetchone()
 
-    return org
+    return classes
 
 def get_class_by_subject(subject:str):
     curr.execute("""SELECT * FROM classes WHERE lower(subject) = %s""", (subject.lower(),))
-    org = curr.fetchone()
+    classes = curr.fetchone()
 
-    return org
+    return classes
 
 def get_class_by_id(id:int):
-    curr.execute("""SELECT * FROM classes WHERE id = %s""", id)
-    org = curr.fetchone()
+    curr.execute("""SELECT * FROM classes WHERE id = %s""", (id,))
+    classes = curr.fetchone()
 
-    return org
+    return classes
 
 def get_class_by_code(entry_code:str):
     curr.execute("""SELECT * FROM classes WHERE lower(entry_code) = %s""", (entry_code.lower(),))
-    org = curr.fetchone()
+    classes = curr.fetchone()
 
-    return org
+    return classes
 
 
 
@@ -45,6 +45,35 @@ def add_user_to_class(user_id:int, user_role:str, class_id:int, class_name:str, 
 
 def add_class_to_organisation(organisation_id:int, class_id:int):
     curr.execute("""INSERT INTO organisations_classes (organisation_id, class_id) VALUES(%s, %s)""", (organisation_id, class_id ))
+    conn.commit()
+    return True
+
+def get_classes():
+    curr.execute("""SELECT * FROM classes """)
+    classes = curr.fetchall()
+
+    return classes
+
+def get_students_in_class(class_id:int):
+    curr.execute("""SELECT user_id FROM users_classes WHERE class_id = %s AND user_role = 'student' """, (class_id,))
+    classes = curr.fetchall()
+
+    return classes
+
+def get_teachers_in_class(class_id:int):
+    curr.execute("""SELECT user_id FROM users_classes WHERE class_id = %s AND user_role = 'teacher' """, (class_id,))
+    classes = curr.fetchall()
+
+    return classes
+
+
+def delete_students(user_id:int, class_id:int):
+    curr.execute("""DELETE FROM users_classes WHERE user_id = %s AND class_id = %s AND user_role = 'student'""", (user_id, class_id))
+    conn.commit()
+    return True
+
+def delete_teachers(user_id:int, class_id:int):
+    curr.execute("""DELETE FROM users_classes WHERE user_id = %s AND class_id = %s AND user_role = 'teacher'""", (user_id, class_id))
     conn.commit()
     return True
 
