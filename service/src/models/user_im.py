@@ -6,3 +6,6 @@ class UserIM(BaseModel):
     role:str
     username:str
     password:str
+
+class UserGetIM(BaseModel):
+    id:int
