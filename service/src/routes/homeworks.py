@@ -1,10 +1,10 @@
-from models.homeworks_im import HomeworkIM
+from models.homeworks_im import HomeworkIM, SubmitHomeworkIM, HomeworkAttachmentIM
 from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer
+from azure.storage.blob.aio import BlobServiceClient
 
-
-from db.db_homeworks import create_homework, get_homework_by_title, get_homework_by_id, add_homework_to_class, add_homework_to_user, get_homeworks, get_homeworks_in_class, get_user_homework, delete_homework_by_id, delete_homework_by_title, update_homework
-from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File
+from db.db_homeworks import create_homework, get_homework_by_title, get_homework_by_id, add_homework_to_class, add_homework_to_user, get_homeworks, get_homeworks_in_class, get_user_homework, delete_homework_by_id, delete_homework_by_title, update_homework, user_submit_homework, get_submited_homeworks, create_attachment, add_link_to_attachment
+from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File, Form
 import uuid
 
 import jwt
@@ -18,6 +18,7 @@ public_key = "\n".join(os.getenv("RSA_PUBLIC_KEY").split("<end>"))
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
+blob_service_client = BlobServiceClient.from_connection_string(os.getenv("AZURE_STORAGE_CONNECTION_STRING"))
 
 
 @router.get("/get/homework/by/{homework_title}", tags=["homeworks"])
@@ -86,16 +87,33 @@ def get_all_homeworks():
 
 
 @router.post("/class/create/homeworks/{class_id}", tags=["homeworks"])
-async def create_homeworks(hm_im: HomeworkIM, class_id:int, token: Annotated[str, Depends(oauth2_scheme)]):
+async def create_homeworks(hm_im: HomeworkIM, at_hm:HomeworkAttachmentIM,class_id:int, token: Annotated[str, Depends(oauth2_scheme)], body:str = Form(...), file:UploadFile = File(None),):
     payload = jwt.decode(token, public_key, algorithms=["RS256"])
-    user_role: int = payload["user_role"]
+    user_role: str = payload["user_role"]
+    user_id: str = payload["user_id"]
     if user_role == "teacher" or user_role == "admin":
 
         
-        homework = create_homework(hm_im.title, hm_im.type_homework, hm_im.info, class_id)
-        
-        print(hm_im.id)
+        homework = create_homework(hm_im.title, hm_im.type_homework, hm_im.info, hm_im.criteria,class_id, hm_im.status)
 
+        attachment = create_attachment(homework['id'], body, user_id)
+
+        if file:
+             _, extension = file.filename.split(".")
+        
+        print(f"\n\n{file.filename}\n\n")
+        container_client = blob_service_client.get_container_client("files")
+        
+        try:
+            if not await container_client.exists():
+                await container_client.create_container()
+                
+            blob_client = container_client.get_blob_client(f"{uuid.uuid4()}.{extension}")
+            
+            await blob_client.upload_blob(await file.read(), blob_type="BlockBlob")
+            add_link = add_link_to_attachment(blob_client.url, attachment['id'])
+        except:
+            raise HTTPException(status_code=500, detail="Could not upload file")
         if not homework:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -103,7 +121,7 @@ async def create_homeworks(hm_im: HomeworkIM, class_id:int, token: Annotated[str
             )
     
 
-        return homework
+        return homework, attachment, add_link
     
 
 
@@ -122,10 +140,10 @@ async def get_homework( homework_id:int):
 
     return homework
 
-router.put("/put/homework/{homework_id}", tags="homeworks")
+@router.put("/put/homework/{homework_id}", tags="homework")
 async def homework_update(homework_id:int, hm_im:HomeworkIM):
     
-    homework = update_homework(hm_im.title, hm_im.type_homework, hm_im.info, hm_im.class_id, homework_id)
+    homework = update_homework(hm_im.title, hm_im.type_homework, hm_im.info, hm_im.class_id, homework_id, hm_im.status)
 
     if not homework:
         raise HTTPException(
@@ -137,7 +155,7 @@ async def homework_update(homework_id:int, hm_im:HomeworkIM):
     return homework
 
 
-router.delete("/delete/homework/{homework_id}", tags=["homeworks"])
+@router.delete("/delete/homework/{homework_id}", tags=["homeworks"])
 async def delete_homework(homework_id:int):
     homework = delete_homework_by_id(homework_id)
     
@@ -149,3 +167,39 @@ async def delete_homework(homework_id:int):
 
 
     return homework
+
+@router.post("/submit/homework/{homework_id}",tags=["homeworks"])
+async def submit_homework(homework_id:int, hm_im:SubmitHomeworkIM, token: Annotated[str, Depends(oauth2_scheme)] ):
+    
+
+    payload = jwt.decode(token, public_key, algorithms=["RS256"])
+    user_role: str = payload["user_role"]
+    user_id: int = payload["user_id"]
+
+    if user_role == "student":
+        sumbit = user_submit_homework(hm_im.text, homework_id, user_id)
+        if not sumbit:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Homework is not deleted",
+            )
+
+
+        return sumbit
+    
+@router.get("/submited/homeworks/{user_id}")
+async def get_submited_hm_user(token: Annotated[str, Depends(oauth2_scheme)] ):
+    payload = jwt.decode(token, public_key, algorithms=["RS256"])
+    user_role: str = payload["user_role"]
+    user_id: int = payload["user_id"]
+
+    if user_role == "student":
+        sumbited = get_submited_homeworks(user_id)
+        if not sumbited:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Homework is not deleted",
+            )
+
+
+        return sumbited
