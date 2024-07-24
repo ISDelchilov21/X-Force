@@ -26,6 +26,13 @@ def get_homeworks_in_class(class_id:int):
 
     return classes
 
+def get_homework_in_class(class_id:int):
+    curr.execute("""SELECT * FROM homeworks WHERE class_id = %s""", (class_id,))
+    classes = curr.fetchone()
+
+    return classes
+
+
 def get_user_homework(user_id:int):
     curr.execute("""SELECT * FROM user_homeworks WHERE user_id = %s""", (user_id,))
     hm = curr.fetchall()
@@ -37,7 +44,7 @@ def create_homework(title:str, type_homework:str, info:str, criteria:str, class_
     if get_homework_by_title(title):
         return False
     
-    curr.execute("""INSERT INTO homeworks (title, type_of_homework, homework_info, criteria, class_id, status) VALUES(%s, %s, %s, %s, %s)""", (title.lower(), type_homework.lower(), info.lower(), criteria.lower(), class_id, status.lower()))
+    curr.execute("""INSERT INTO homeworks (title, type_of_homework, homework_info, criteria, class_id, status) VALUES(%s, %s, %s, %s, %s,%s)""", (title.lower(), type_homework.lower(), info.lower(), criteria.lower(), class_id, status.lower()))
     conn.commit()
     return True
 
@@ -84,12 +91,12 @@ def delete_homework_by_title(title:str):
     conn.commit()
     return True
 def create_attachment(homework_id:int, info:str, user_id:int):
-    curr.execute("""INSERT INTO homework_attachment (homework_id, text_info, user_id) VALUES(%s, %s, %s, %s)""", (homework_id, info, user_id))
+    curr.execute("""INSERT INTO homework_attachment (homework_id, text_info, user_id) VALUES(%s, %s, %s)""", (homework_id, info, user_id))
     conn.commit()
     return True
 
-def add_link_to_attachment( link:str, attachment_id:int):
-    curr.execute("""UPDATE homework_attachment SET link = %s WHERE id = %s""", (link, attachment_id,))
+def add_link_to_attachment( link:str, homework_id:int):
+    curr.execute("""UPDATE homework_attachment SET link = %s WHERE homework_id = %s""", (link, homework_id,))
     conn.commit()
     return True
 

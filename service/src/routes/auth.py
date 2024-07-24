@@ -9,15 +9,18 @@ from models.logout_im import LogoutIm
 from db.db_user import auth_user, create_user
 
 import jwt
+
 import os
+
 import datetime
-import pytz
-
 router = APIRouter()
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 env = "\n".join(os.getenv("RSA_PRIVATE_KEY").split("<end>"))
+public_key = "\n".join(os.getenv("RSA_PUBLIC_KEY").split("<end>"))
+secret_key = "\n".join(os.getenv("RSA_PRIVATE_KEY").split("<end>"))
 
+
+    
 @router.post("/login", tags=["auth"])
 async def login(user_im: LoginIm):
     user = auth_user(user_im.username, user_im.password)
