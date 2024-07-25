@@ -1,18 +1,20 @@
-from fastapi import Depends, APIRouter, HTTPException, status, Header
+from fastapi import Depends, APIRouter, HTTPException, status, Header, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Annotated
 
 from models.user_im import UserIM
 from models.login_im import LoginIm
 from models.token_im import Token
-from models.logout_im import LogoutIm 
-from db.db_user import auth_user, create_user
 
+from db.db_user import auth_user, create_user
+from typing import List
 import jwt
 
 import os
+import pytz
 
 import datetime
+
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 env = "\n".join(os.getenv("RSA_PRIVATE_KEY").split("<end>"))
@@ -20,7 +22,6 @@ public_key = "\n".join(os.getenv("RSA_PUBLIC_KEY").split("<end>"))
 secret_key = "\n".join(os.getenv("RSA_PRIVATE_KEY").split("<end>"))
 
 
-    
 @router.post("/login", tags=["auth"])
 async def login(user_im: LoginIm):
     user = auth_user(user_im.username, user_im.password)
@@ -32,9 +33,19 @@ async def login(user_im: LoginIm):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = jwt.encode({"iss": user["username"], "user_id": user["id"], "user_role": user["role"], "exp": datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(hours=3)}, env, algorithm="RS256")
-    
+    token = jwt.encode(
+        {
+            "iss": user["username"],
+            "user_id": user["id"],
+            "user_role": user["role"],
+            "exp": datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(hours=3),
+        },
+        env,
+        algorithm="RS256",
+    )
+
     return Token(access_token=token, token_type="bearer")
+
 
 @router.post("/token", tags=["auth"])
 async def token(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -45,15 +56,25 @@ async def token(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    token = jwt.encode({"iss": user["username"], "user_id": user["id"], "user_role": user["role"], "exp": datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(hours=3)}, env, algorithm="RS256")
-    
+
+    token = jwt.encode(
+        {
+            "iss": user["username"],
+            "user_id": user["id"],
+            "user_role": user["role"],
+            "exp": datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(hours=3),
+        },
+        env,
+        algorithm="RS256",
+    )
+
     return Token(access_token=token, token_type="bearer")
+
 
 @router.post("/register", tags=["auth"])
 async def register(user_im: UserIM):
     user = create_user(user_im.email, user_im.role, user_im.username, user_im.password)
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
